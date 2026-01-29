@@ -4,7 +4,7 @@
 public class Collatz {
 
     /** cal the next collatz number of param
-     * @param n
+     * @param n the param
      * */
     public static int nextNumber(int n) {
         if(n % 2 == 0)
@@ -13,7 +13,7 @@ public class Collatz {
             return 3 * n + 1;
     }
 
-    public static void main(String[] args) {
+    static void main() {
         int n = 5;
         System.out.print(n + " ");
         while (n != 1) {

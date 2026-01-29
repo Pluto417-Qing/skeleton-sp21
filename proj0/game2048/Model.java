@@ -1,11 +1,12 @@
 package game2048;
 
+import java.util.Arrays;
 import java.util.Formatter;
 import java.util.Observable;
 
 
 /** The state of a game of 2048.
- *  @author TODO: YOUR NAME HERE
+ *  @author TODO: yuanqh23
  */
 public class Model extends Observable {
     /** Current contents of the board. */
@@ -110,15 +111,69 @@ public class Model extends Observable {
         boolean changed;
         changed = false;
 
-        // TODO: Modify this.board (and perhaps this.score) to account
-        // for the tilt to the Side SIDE. If the board changed, set the
-        // changed local variable to true.
+        board.startViewingFrom(side);
+        for (int i = 0; i < board.size(); i++) {
+            if(moveSingleCol(i)){
+                changed = true;
+            }
+        }
+        board.startViewingFrom(Side.NORTH);
 
         checkGameOver();
         if (changed) {
             setChanged();
         }
         return changed;
+    }
+
+    private boolean moveSingleCol(int col) {
+        boolean[] changed = new boolean[board.size() + 1];
+
+        for (int i = board.size() - 2; i >= 0; i--) {
+            changed = moveSingleTile(i, col, changed);
+        }
+
+        return hasTrue(changed);
+    }
+
+    private boolean hasTrue(boolean[] arr){
+        for(boolean b : arr){
+            if(b) return true;
+        }
+        return false;
+    }
+
+    /**
+     * @param row
+     * @param col
+     * @returns int the scores gets added to
+     * */
+    private boolean[] moveSingleTile(int row, int col, boolean[] changed) {
+        int size = board.size();
+        Tile tile = board.tile(col, row);
+        boolean[] newChanged = Arrays.copyOf(changed, changed.length);
+
+        if(tile == null) return changed;
+
+        for(int i = row + 1; i < size; i++){
+            if(changed[i]) continue;
+
+            Tile nextTile = board.tile(col, i);
+            if(nextTile == null){
+                board.move(col, i, tile);
+                tile = board.tile(col, i);
+                newChanged[size] = true;
+            } else if(nextTile.value() == tile.value()){
+                board.move(col, i, tile);
+                newChanged[row] = false;
+                newChanged[i] = true;
+                score += tile.value() * 2;
+                break;
+            } else {
+                break;
+            }
+        }
+        return newChanged;
     }
 
     /** Checks if the game is over and sets the gameOver variable
@@ -138,6 +193,14 @@ public class Model extends Observable {
      * */
     public static boolean emptySpaceExists(Board b) {
         // TODO: Fill in this function.
+        int size = b.size();
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                if(b.tile(i, j) == null){
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -148,6 +211,15 @@ public class Model extends Observable {
      */
     public static boolean maxTileExists(Board b) {
         // TODO: Fill in this function.
+        int size = b.size();
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                Tile tile = b.tile(i, j);
+                if(tile != null && tile.value() == MAX_PIECE){
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -158,10 +230,30 @@ public class Model extends Observable {
      * 2. There are two adjacent tiles with the same value.
      */
     public static boolean atLeastOneMoveExists(Board b) {
-        // TODO: Fill in this function.
+        if(emptySpaceExists(b) || checkMergeable(b))
+            return true;
+
         return false;
     }
 
+    private static boolean checkMergeable(Board b){
+        int size = b.size();
+
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size - 1; j++) {
+                b.startViewingFrom(Side.NORTH);
+                if(b.tile(i, j).value() == b.tile(i, j+1).value()){
+                    return true;
+                }
+                b.startViewingFrom(Side.WEST);
+                if(b.tile(i, j).value() == b.tile(i, j+1).value()){
+                    return true;
+                }
+
+            }
+        }
+        return false;
+    }
 
     @Override
      /** Returns the model as a string, used for debugging. */
